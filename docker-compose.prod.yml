@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: serviceops-app-prod
+    networks:
+      - serviceops_network
+    build:
+      context: ./ServiceOps
+      dockerfile: Dockerfile
+    ports:
+      - "80:8080"
+      - "443:8081"
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=servicedb_prod;Username=prod_user;Password=${DB_PASSWORD}
+      Kafka__BootstrapServers: kafka:9092
+    volumes:
+      - app_data:/app
+    restart: unless-stopped
+
+  postgres:
+    container_name: serviceops-postgres-prod
+    image: postgres:15-alpine
+    networks:
+      - serviceops_network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: prod_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: servicedb_prod
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  kafka:
+    container_name: serviceops-kafka-prod
+    image: confluentinc/cp-kafka:7.6.1
+    networks:
+      - serviceops_network
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: unless-stopped
+
+  zookeeper:
+    container_name: serviceops-zookeeper-prod
+    image: confluentinc/cp-zookeeper:7.6.1
+    networks:
+      - serviceops_network
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+  app_data:
+
+networks:
+  serviceops_network:
+    driver: bridge

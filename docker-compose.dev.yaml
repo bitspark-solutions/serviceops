@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: serviceops-app
+    networks:
+      - serviceops_network
+    build:
+      context: ./ServiceOps
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=servicedb;Username=user;Password=password
+      - Kafka__BootstrapServers=kafka:9092
+    volumes:
+      - ./ServiceOps:/app 
+
+  postgres:
+    container_name: serviceops-postgres
+    image: postgres:15-alpine
+    networks:
+      - serviceops_network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: servicedb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  kafka:
+    container_name: serviceops-kafka
+    image: confluentinc/cp-kafka:7.6.1
+    networks:
+      - serviceops_network
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zookeeper:
+    container_name: serviceops-zookeeper
+    image: confluentinc/cp-zookeeper:7.6.1
+    networks:
+      - serviceops_network
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+volumes:
+  postgres_data:
+
+networks:
+  serviceops_network:
+    driver: bridge
+
