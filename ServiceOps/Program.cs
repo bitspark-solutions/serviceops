@@ -7,6 +7,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Add health check endpoint
+app.MapGet("/healthz", () => Results.Ok("I am fine"));
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

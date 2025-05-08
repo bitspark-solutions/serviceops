@@ -9,13 +9,11 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["ServiceOps/ServiceOps.csproj", "ServiceOps/"]
-# If you have other projects, copy their .csproj files here, e.g.:
-# COPY ["OtherProject/OtherProject.csproj", "OtherProject/"]
-RUN dotnet restore "ServiceOps/ServiceOps.csproj"
+COPY ["ServiceOps.csproj", "./"]
+RUN dotnet restore "ServiceOps.csproj"
 
 COPY . .
-WORKDIR "/src/ServiceOps"
+WORKDIR "/src"
 RUN dotnet build "ServiceOps.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
@@ -26,6 +24,6 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 # Health check for production
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/healthz || exit 1
 ENTRYPOINT ["dotnet", "ServiceOps.dll"]

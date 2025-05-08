@@ -6,6 +6,9 @@ services:
     build:
       context: ./ServiceOps
       dockerfile: Dockerfile
+      target: build
+    working_dir: /app
+    command: dotnet watch run --project ServiceOps.csproj --urls http://*:8080
     ports:
       - "8080:8080"
       - "8081:8081"
