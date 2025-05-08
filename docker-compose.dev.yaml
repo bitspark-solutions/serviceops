@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     container_name: serviceops-app
@@ -23,7 +21,7 @@ services:
 
   postgres:
     container_name: serviceops-postgres
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     networks:
       - serviceops_network
     ports:
@@ -37,7 +35,7 @@ services:
 
   kafka:
     container_name: serviceops-kafka
-    image: confluentinc/cp-kafka:7.6.1
+    image: confluentinc/cp-kafka:7.9.0
     networks:
       - serviceops_network
     ports:
@@ -55,7 +53,7 @@ services:
 
   zookeeper:
     container_name: serviceops-zookeeper
-    image: confluentinc/cp-zookeeper:7.6.1
+    image: confluentinc/cp-zookeeper:7.9.0
     networks:
       - serviceops_network
     ports:
