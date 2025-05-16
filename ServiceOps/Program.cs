@@ -1,16 +1,24 @@
+using System.Data.Common;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Npgsql;
+using Confluent.Kafka;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Add health check endpoint
+// Health check endpoint
 app.MapGet("/healthz", () => Results.Ok("I am fine"));
 
-// Configure the HTTP request pipeline.
+// Startup verification for DB and Kafka
+await DependencyVerifier.VerifyDependenciesAsync(app);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
