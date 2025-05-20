@@ -24,3 +24,5 @@ config/secrets/*.yaml
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
+[Bb]in/
+[Oo]bj/
