@@ -17,6 +17,8 @@ services:
       - kafka
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Auth0__Domain=${AUTH0_DOMAIN_DEV}
+      - Auth0__Audience=${AUTH0_AUDIENCE_DEV}
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=servicedb;Username=user;Password=password
       - Kafka__BootstrapServers=kafka:9092
     volumes:

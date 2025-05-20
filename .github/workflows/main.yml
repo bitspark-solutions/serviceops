@@ -1,0 +1,100 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main # Or your primary production branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required for pushing to GitHub Packages Registry (ghcr.io)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # Adjust if your project uses a different .NET version
+
+      - name: Install SOPS
+        uses: mozilla/sops-action@v1
+        with:
+          version: 'latest' # Or pin to a specific SOPS version e.g., 'v3.7.3'
+
+      - name: Decrypt SOPS secrets for Production
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_PROD_KEY }} # Store your AGE private key as a GitHub secret named SOPS_AGE_PROD_KEY
+        run: |
+          echo "Decrypting production secrets..."
+          sops --input-type yaml --output-type dotenv -d config/secrets/secrets.prod.yaml > .env.production
+          echo "SOPS_ENV_FILE=.env.production" >> $GITHUB_ENV
+          echo ".env.production file created."
+          echo "File content preview (first 5 lines):"
+          head -n 5 .env.production
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Login to Docker Hub (Uncomment if using Docker Hub)
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Path to the directory containing the Dockerfile
+          file: ./ServiceOps/Dockerfile # Explicitly specify Dockerfile if not in root or named Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.sha }}
+          # Uncomment and adjust if using Docker Hub
+          # tags: |
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/your-image-name:latest
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/your-image-name:${{ github.sha }}
+          # build-args: |
+          #   ARG_NAME=value # Pass build arguments if your Dockerfile needs them
+          # secrets: |
+          #   "GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}" # Example for passing secrets to Docker build (use with caution)
+
+      - name: Deploy to Production (Example - Customize for your environment)
+        # This is a placeholder. Replace with your actual deployment steps.
+        # Common methods include SSH, kubectl apply, serverless framework deploy, etc.
+        # Ensure the .env.production file (or its contents as environment variables)
+        # is securely transferred and made available to your application in the production environment.
+        run: |
+          echo "Deployment to production environment starts..."
+          echo "The .env.production file is available at ${{ env.SOPS_ENV_FILE }}"
+          echo "Implement your deployment strategy here."
+          echo "For example, using SSH to a server and docker-compose:"
+          echo "  scp .env.production user@your-server:/path/to/app/.env"
+          echo "  ssh user@your-server 'cd /path/to/app && docker-compose pull && docker-compose --env-file .env up -d'"
+          echo "Deployment steps completed (placeholder)."
+
+      # Example: Deploy to a server using SSH and docker-compose
+      # - name: Deploy to Server via SSH
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.PROD_SERVER_HOST }}
+      #     username: ${{ secrets.PROD_SERVER_USERNAME }}
+      #     key: ${{ secrets.PROD_SERVER_SSH_KEY }} # SSH private key
+      #     port: ${{ secrets.PROD_SERVER_PORT || 22 }}
+      #     script: |
+      #       echo "Copying .env.production to server..."
+      #       scp -P ${{ secrets.PROD_SERVER_PORT || 22 }} .env.production ${{ secrets.PROD_SERVER_USERNAME }}@${{ secrets.PROD_SERVER_HOST }}:/apps/serviceops/.env.production
+      #       echo "Pulling new image and restarting services..."
+      #       cd /apps/serviceops
+      #       docker-compose -f docker-compose.prod.yml pull your_service_name # Replace your_service_name
+      #       docker-compose -f docker-compose.prod.yml --env-file .env.production up -d your_service_name # Replace your_service_name
+      #       echo "Deployment complete."

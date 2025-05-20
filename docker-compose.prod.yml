@@ -14,6 +14,8 @@ services:
       - kafka
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      Auth0__Domain: ${AUTH0_DOMAIN}
+      Auth0__Audience: ${AUTH0_AUDIENCE}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=servicedb_prod;Username=prod_user;Password=${DB_PASSWORD}
       Kafka__BootstrapServers: kafka:9092
     volumes:

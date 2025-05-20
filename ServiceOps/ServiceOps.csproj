@@ -1,16 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-    </PropertyGroup>
+      <UserSecretsId>ea348d0b-70d9-485d-bd43-df1b0ffee575</UserSecretsId>
+  </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.15"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
-        <PackageReference Include="Npgsql" Version="8.0.3"/>
-        <PackageReference Include="Confluent.Kafka" Version="2.10.0"/>
+        <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.1" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.15" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="Npgsql" Version="8.0.3" />
+        <PackageReference Include="Confluent.Kafka" Version="2.10.0" />
     </ItemGroup>
 
 </Project>
